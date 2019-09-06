@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: alpine:latest
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Setup dependencies
+          command: |
+            set -euo pipefail
+
+            apk add --no-progress --no-cache curl docker-cli tar xz
+            curl -LsS https://github.com/tcnksm/ghr/releases/download/v0.12.2/ghr_v0.12.2_linux_amd64.tar.gz \
+                | tar xz --strip-components=1 -C /usr/bin --wildcards "*/ghr"
+      - run:
+          name: Build WireGuard if necessary
+          command: |
+            set -euo pipefail
+
+            export KERNEL_VERSION=5.1.20-300.fc30.x86_64
+            export WIREGUARD_VERSION=0.0.20190905
+            export OUTPUT_NAME="wireguard-${KERNEL_VERSION}-${WIREGUARD_VERSION}.tar.xz"
+
+            if [[ "$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/all/${OUTPUT_NAME}")" -eq 404 ]]; then
+              docker build \
+                  --build-arg "KERNEL_VERSION=${KERNEL_VERSION}" \
+                  --build-arg "WIREGUARD_VERSION=${WIREGUARD_VERSION}" \
+                  -t "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
+                  .
+              docker save "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
+                  | tar xO --wildcards '*/layer.tar' \
+                  | xz -c \
+                  > "${OUTPUT_NAME}"
+              ghr all "${OUTPUT_NAME}"
+            fi
