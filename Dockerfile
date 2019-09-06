@@ -1,10 +1,12 @@
 FROM fedora:30 AS builder
 
+RUN dnf install -y libmnl-devel elfutils-libelf-devel pkg-config koji @development-tools && \
+    dnf clean all
+
 ARG KERNEL_VERSION
 RUN test -n "${KERNEL_VERSION}"
 
-RUN dnf install -y libmnl-devel elfutils-libelf-devel pkg-config koji @development-tools && \
-    koji download-build --rpm --arch=x86_64 kernel-core-${KERNEL_VERSION} && \
+RUN koji download-build --rpm --arch=x86_64 kernel-core-${KERNEL_VERSION} && \
     koji download-build --rpm --arch=x86_64 kernel-devel-${KERNEL_VERSION} && \
     koji download-build --rpm --arch=x86_64 kernel-modules-${KERNEL_VERSION} && \
     dnf install -y kernel-core-${KERNEL_VERSION}.rpm kernel-devel-${KERNEL_VERSION}.rpm kernel-modules-${KERNEL_VERSION}.rpm && \
