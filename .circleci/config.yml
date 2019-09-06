@@ -12,7 +12,7 @@ jobs:
           command: |
             set -euo pipefail
 
-            apk add --no-progress --no-cache curl docker-cli tar xz
+            apk add --no-progress --no-cache curl docker-cli tar xz jq git
             curl -LsS https://github.com/tcnksm/ghr/releases/download/v0.12.2/ghr_v0.12.2_linux_amd64.tar.gz \
                 | tar xz --strip-components=1 -C /usr/bin --wildcards "*/ghr"
       - run:
@@ -20,11 +20,20 @@ jobs:
           command: |
             set -euo pipefail
 
-            export KERNEL_VERSION=5.1.20-300.fc30.x86_64
-            export WIREGUARD_VERSION=0.0.20190905
-            export OUTPUT_NAME="wireguard-${KERNEL_VERSION}-${WIREGUARD_VERSION}.tar.xz"
+            # Only build the latest 10 releases
+            BUILD_IDS=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/testing/builds/builds.json" | jq -r '.builds[].id' | head -n 10)
+            WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/WireGuard | cut -d"/" -f3 | grep -vF "^{}" | sort -V | tail -n 1)
 
-            if [[ "$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/all/${OUTPUT_NAME}")" -eq 404 ]]; then
+            for BUILD_ID in ${BUILD_IDS}; do
+              export OUTPUT_NAME="wireguard-${WIREGUARD_VERSION}-${BUILD_ID}.tar.xz"
+
+              if [[ "$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/all/${OUTPUT_NAME}")" -eq 302 ]]; then
+                continue
+              fi
+
+              export KERNEL_VERSION=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/testing/builds/${BUILD_ID}/x86_64/commitmeta.json" \
+                  | jq -r '.["rpmostree.rpmdb.pkglist"] | map(select(.[0] == "kernel"))[0] | .[2] + "-" + .[3] + "." + .[4]')
+
               docker build \
                   --build-arg "KERNEL_VERSION=${KERNEL_VERSION}" \
                   --build-arg "WIREGUARD_VERSION=${WIREGUARD_VERSION}" \
@@ -35,4 +44,4 @@ jobs:
                   | xz -c \
                   > "${OUTPUT_NAME}"
               ghr all "${OUTPUT_NAME}"
-            fi
+            done
