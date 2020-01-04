@@ -25,10 +25,12 @@ jobs:
             WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/WireGuard | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sort -V | tail -n 1)
 
             for BUILD_ID in ${BUILD_IDS}; do
-              OUTPUT_NAME="wireguard-${WIREGUARD_VERSION}-${BUILD_ID}.tar.xz"
+              LONG_OUTPUT_NAME="wireguard-${WIREGUARD_VERSION}-${BUILD_ID}.tar.xz"
+              SHORT_OUTPUT_NAME="wireguard-${BUILD_ID}.tar.xz"
 
-              RELEASE_HTTPCODE=$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/binaries/${OUTPUT_NAME}")
-              if [[ "${RELEASE_HTTPCODE}" -eq 302 ]]; then
+              LONG_RELEASE_HTTPCODE=$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/binaries/${LONG_OUTPUT_NAME}")
+              SHORT_RELEASE_HTTPCODE=$(curl -sSo /dev/null --write-out %{http_code} "https://github.com/SerialVelocity/coreos-wireguard/releases/download/binaries/${SHORT_OUTPUT_NAME}")
+              if [[ "${LONG_RELEASE_HTTPCODE}" -eq 302 ]] && [[ "${SHORT_RELEASE_HTTPCODE}" -eq 302 ]]; then
                 continue
               fi
 
@@ -43,6 +45,10 @@ jobs:
               docker save "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
                   | tar xO --wildcards '*/layer.tar' \
                   | xz -c \
-                  > "${OUTPUT_NAME}"
-              ghr binaries "${OUTPUT_NAME}"
+                  > "${LONG_OUTPUT_NAME}"
+              ln "${LONG_OUTPUT_NAME}" "${SHORT_OUTPUT_NAME}"
+              if [[ "${LONG_RELEASE_HTTPCODE}" -ne 302 ]]; then
+                ghr binaries "${LONG_OUTPUT_NAME}"
+              fi
+              ghr -replace binaries "${SHORT_OUTPUT_NAME}"
             done
