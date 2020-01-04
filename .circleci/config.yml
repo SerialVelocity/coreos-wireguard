@@ -22,7 +22,7 @@ jobs:
 
             # Only build the latest 10 releases
             BUILD_IDS=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/testing/builds/builds.json" | jq -r '.builds[].id' | head -n 10)
-            WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/WireGuard | cut -d"/" -f3 | grep -vF "^{}" | sort -V | tail -n 1)
+            WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/WireGuard | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sort -V | tail -n 1)
 
             for BUILD_ID in ${BUILD_IDS}; do
               OUTPUT_NAME="wireguard-${WIREGUARD_VERSION}-${BUILD_ID}.tar.xz"
