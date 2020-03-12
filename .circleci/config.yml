@@ -25,6 +25,7 @@ jobs:
               # Only build the latest 10 releases
               BUILD_IDS=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/${BRANCH}/builds/builds.json" | jq -r '.builds[].id' | head -n 10)
               WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/wireguard-linux-compat | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sed 's/^v//' | sort -V | tail -n 1)
+              WIREGUARD_TOOLS_VERSION=$(git ls-remote --tags https://git.zx2c4.com/wireguard-tools | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sed 's/^v//' | sort -V | tail -n 1)
 
               for BUILD_ID in ${BUILD_IDS}; do
                 LONG_OUTPUT_NAME="wireguard-${WIREGUARD_VERSION}-${BUILD_ID}.tar.xz"
@@ -42,6 +43,7 @@ jobs:
                 docker build \
                     --build-arg "KERNEL_VERSION=${KERNEL_VERSION}" \
                     --build-arg "WIREGUARD_VERSION=v${WIREGUARD_VERSION}" \
+                    --build-arg "WIREGUARD_TOOLS_VERSION=v${WIREGUARD_TOOLS_VERSION}" \
                     -t "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
                     .
                 docker save "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
