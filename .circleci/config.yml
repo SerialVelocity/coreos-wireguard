@@ -57,3 +57,22 @@ jobs:
                 ghr -replace "${BRANCH}" "${SHORT_OUTPUT_NAME}"
               done
             done
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - master
+  nightly:
+    jobs:
+      - build
+    triggers:
+      - schedule:
+          cron: "0 2 * * *"
+          filters:
+            branches:
+              only:
+                master
