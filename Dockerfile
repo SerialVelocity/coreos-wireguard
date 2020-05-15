@@ -16,7 +16,8 @@ RUN koji download-build --rpm --arch=x86_64 kernel-core-${KERNEL_VERSION} && \
 ARG WIREGUARD_VERSION
 RUN test -n "${WIREGUARD_VERSION}"
 
-RUN curl --fail -LsS https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-${WIREGUARD_VERSION}.tar.xz | tar xJ && \
+RUN echo -e "${KERNEL_VERSION}\n5.6" | sort -V | tail -n 1 | grep -q '^5\.6$' || exit 0 && \
+    curl --fail -LsS https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-${WIREGUARD_VERSION}.tar.xz | tar xJ && \
     cd /wireguard-linux-compat-${WIREGUARD_VERSION}/src && \
     KERNELRELEASE=${KERNEL_VERSION} make -j$(nproc) && \
     KERNELRELEASE=${KERNEL_VERSION} INSTALL_MOD_STRIP=1 make install && \
