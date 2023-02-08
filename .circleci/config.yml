@@ -23,7 +23,7 @@ jobs:
             BRANCHES="stable testing"
             for BRANCH in ${BRANCHES}; do
               # Only build the latest 10 releases
-              BUILD_IDS=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/${BRANCH}/builds/builds.json" | jq -r '.builds[].id' | head -n 10)
+              BUILD_IDS=$(curl -sS --fail "https://builds.coreos.fedoraproject.org/prod/streams/${BRANCH}/builds/builds.json" | jq -r '.builds[0:10][].id')
               WIREGUARD_VERSION=$(git ls-remote --tags https://git.zx2c4.com/wireguard-linux-compat | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sed 's/^v//' | sort -V | tail -n 1)
               WIREGUARD_TOOLS_VERSION=$(git ls-remote --tags https://git.zx2c4.com/wireguard-tools | cut -d"/" -f3 | grep -vF "^{}" | grep -vE "^experimental-" | sed 's/^v//' | sort -V | tail -n 1)
 
