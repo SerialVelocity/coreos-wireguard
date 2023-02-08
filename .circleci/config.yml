@@ -18,7 +18,7 @@ jobs:
       - run:
           name: Build WireGuard if necessary
           command: |
-            set -euo pipefail
+            set -euxo pipefail
 
             BRANCHES="stable testing"
             for BRANCH in ${BRANCHES}; do
