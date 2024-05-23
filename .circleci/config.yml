@@ -13,7 +13,7 @@ jobs:
             set -euo pipefail
 
             apk add --no-progress --no-cache curl docker-cli tar xz jq git
-            curl -LsS https://github.com/tcnksm/ghr/releases/download/v0.12.2/ghr_v0.12.2_linux_amd64.tar.gz \
+            curl -LsS https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz \
                 | tar xz --strip-components=1 -C /usr/bin --wildcards "*/ghr"
       - run:
           name: Build WireGuard if necessary
