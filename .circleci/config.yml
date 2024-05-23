@@ -46,10 +46,11 @@ jobs:
                     --build-arg "WIREGUARD_TOOLS_VERSION=v${WIREGUARD_TOOLS_VERSION}" \
                     -t "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
                     .
-                docker save "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}" \
-                    | tar xO --wildcards '*/layer.tar' \
-                    | xz -c \
-                    > "${LONG_OUTPUT_NAME}"
+
+                CONTAINER_ID=$(docker create "coreos-wireguard:${KERNEL_VERSION}-${WIREGUARD_VERSION}")
+                docker cp "${CONTAINER_ID}":/build/wireguard-tools.tar.xz "${LONG_OUTPUT_NAME}"
+                docker rm -v "${CONTAINER_ID}"
+
                 ln "${LONG_OUTPUT_NAME}" "${SHORT_OUTPUT_NAME}"
                 if [[ "${LONG_RELEASE_HTTPCODE}" -ne 302 ]]; then
                   ghr "${BRANCH}" "${LONG_OUTPUT_NAME}"

@@ -13,6 +13,5 @@ RUN curl --fail -LsS https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-to
     strip /pkg/usr/bin/wg && \
     rm -rf /wireguard-tools-${WIREGUARD_TOOLS_VERSION}
 
-FROM scratch
-
-COPY --from=builder /pkg /
+RUN mkdir -p /build && \
+    tar cSJf /build/wireguard-tools.tar.xz -C /pkg/ .
